@@ -1,0 +1,13 @@
+{
+  "name": "refrigerator-bot",
+  "version": "1.0.0",
+  "description": "AI chat bot - consultant for A-tech refrigerators",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "groq-sdk": "^0.8.0",
+    "dotenv": "^16.4.0"
+  }
+}
