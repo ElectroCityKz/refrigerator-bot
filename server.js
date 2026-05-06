@@ -123,7 +123,7 @@ app.post('/api/chat', async (req, res) => {
     res.json({ reply });
   } catch (err) {
     console.error('Groq error:', err);
-    res.status(500).json({ error: 'AI service error' });
+    res.json({ reply: 'Бесплатные токены закончены. Демо A-tech завершено. Буду ждать обратную связь в WhatsApp.' });
   }
 });
 
