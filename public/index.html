@@ -255,13 +255,19 @@
       if (e.key === 'Enter' && !e.shiftKey) send();
     });
 
+    function sanitize(str) {
+      const d = document.createElement('div');
+      d.textContent = str;
+      return d.innerHTML;
+    }
+
     function addMessage(text, isUser) {
       const div = document.createElement('div');
       div.className = `message ${isUser ? 'user' : 'bot'}`;
-      // Convert URLs to links and **bold** to <strong>
-      div.innerHTML = text
+      const safe = sanitize(text);
+      div.innerHTML = safe
         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        .replace(/(https?:\/\/[^\s<)]+)/g, '<a href="$1" target="_blank">Подробнее</a>')
+        .replace(/(https?:\/\/[^\s<)]+)/g, '<a href="$1" target="_blank" rel="noopener">Подробнее</a>')
         .replace(/\n/g, '<br>');
       messagesEl.appendChild(div);
       messagesEl.scrollTop = messagesEl.scrollHeight;

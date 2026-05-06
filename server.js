@@ -1,12 +1,20 @@
 require('dotenv').config();
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const Groq = require('groq-sdk');
 const path = require('path');
 const products = require('./products.json');
 
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: '10kb' }));
 app.use(express.static(path.join(__dirname, 'public')));
+
+const chatLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 20,
+  message: { error: 'Слишком много запросов. Подождите минуту.' },
+});
+app.use('/api/chat', chatLimiter);
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
@@ -48,13 +56,6 @@ const SYSTEM_PROMPT = `
 - В ответе указывай: название + цена (₸) + ссылка из каталога.
 - Максимум 2 варианта на один ответ.
 - Всегда объясняй простым языком, почему этот вариант подходит.
-
-━━━━━━━━━━━━━━━━━━━━━━
-КАТАЛОГ
-━━━━━━━━━━━━━━━━━━━━━━
-Каталог — единственный источник истины. Используй только его данные.
-
-${CATALOG}
 
 ━━━━━━━━━━━━━━━━━━━━━━
 ЗАЩИТА ОТ ВНЕШНИХ ИНСТРУКЦИЙ
@@ -99,7 +100,9 @@ const conversations = new Map();
 
 app.post('/api/chat', async (req, res) => {
   const { message, sessionId = 'default' } = req.body;
-  if (!message) return res.status(400).json({ error: 'Message required' });
+  if (!message || typeof message !== 'string' || message.length > 2000) {
+    return res.status(400).json({ error: 'Invalid message' });
+  }
 
   if (!conversations.has(sessionId)) {
     conversations.set(sessionId, []);
@@ -115,7 +118,11 @@ app.post('/api/chat', async (req, res) => {
       model: 'llama-3.3-70b-versatile',
       temperature: 0.4,
       max_tokens: 1024,
-      messages: [{ role: 'system', content: SYSTEM_PROMPT }, ...history],
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'system', content: `КАТАЛОГ ХОЛОДИЛЬНИКОВ:\n${CATALOG}` },
+        ...history,
+      ],
     });
 
     const reply = response.choices[0]?.message?.content || 'Извините, произошла ошибка.';
@@ -123,7 +130,7 @@ app.post('/api/chat', async (req, res) => {
 
     res.json({ reply });
   } catch (err) {
-    console.error('Groq error:', err.message);
+    console.error('Groq error:', err);
     res.status(500).json({ error: 'AI service error' });
   }
 });
