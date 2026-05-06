@@ -89,4 +89,8 @@ app.post('/api/reset', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3737;
-app.listen(PORT, () => console.log(`Refrigerator Bot running at http://localhost:${PORT}`));
+if (process.env.VERCEL) {
+  module.exports = app;
+} else {
+  app.listen(PORT, () => console.log(`Refrigerator Bot running at http://localhost:${PORT}`));
+}
