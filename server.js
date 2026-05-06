@@ -1,6 +1,5 @@
 require('dotenv').config();
 const express = require('express');
-const rateLimit = require('express-rate-limit');
 const Groq = require('groq-sdk');
 const path = require('path');
 const products = require('./products.json');
@@ -8,13 +7,6 @@ const products = require('./products.json');
 const app = express();
 app.use(express.json({ limit: '10kb' }));
 app.use(express.static(path.join(__dirname, 'public')));
-
-const chatLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 20,
-  message: { error: 'Слишком много запросов. Подождите минуту.' },
-});
-app.use('/api/chat', chatLimiter);
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
